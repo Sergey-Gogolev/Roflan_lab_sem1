@@ -12,10 +12,7 @@ def decimal_to_binary(x):
     return [int(n) for n in bin(x)[2:].zfill(8)]
 
 def binary_to_decimal(a):
-    s = ''
-    for x in a:
-        s += str(x)
-    return int(s, 2)
+    return int(''.join(a), 2)
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(dac, GPIO.OUT, initial=GPIO.LOW)
@@ -28,24 +25,26 @@ try:
     lk = float(input())
     while(not GPIO.input(24)):
         pass
-    deep = []
+    deep = np.array([0. for i in range(1000)])
     volts = 0
     time_start = time.time()
+    ra = range(8)
+    j = 0
+    base = np.array([0,0,0,0,0,0,0,0])
     while(True):
-        signal = [0,0,0,0,0,0,0,0]
-        for i in range(8):
+        signal = base.copy()
+        for i in ra:
             signal[i] = 1
             GPIO.output(dac, signal)
             time.sleep(0.003)
-            compval = GPIO.input(comp)
-            if compval == 1:
-                signal[i] = 0
-            else:
-                signal[i] = 1
-        val = binary_to_decimal(signal)
-        volts = val/levels * 3.09
+            signal[i] = GPIO.input(comp) > 0
+        #val = binary_to_decimal(signal)
+       # volts = val/levels * 3.09
         #print("ADC val = {:^3} -> {}, input voltage = {:.2f}".format(val, signal, volts))
-        deep.append(volts)
+        deep[j] = binary_to_decimal(signal)
+        j+=1
+    for i in range(j-1):
+        deep[i]*= 3.09/levels
 
 #   time_end = time.time()
  #   with open('kolibrovka.txt','a') as f:
